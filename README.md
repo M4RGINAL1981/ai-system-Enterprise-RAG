@@ -122,3 +122,68 @@ flowchart LR
    * **Частота обращений:** Постоянный скрейпинг раз в 15 секунд (Prometheus) и потоковая запись логов по факту обработки каждого запроса.
 
    * **Формат данных:** Plain text (OpenMetrics) и структурированный JSON.
+
+# Этап 4. Компонентная декомпозиция (C4 Model — Level 2: Container / Component).
+
+### 4.1 Код диаграммы компонентов для Mermaid
+
+``` mermaid
+flowchart TB
+    Client[Сотрудник / Web-интерфейс] -->|HTTP POST /api/v1/predict| API[FastAPI Gateway]
+    Admin[Администратор] -->|Загрузка документов| API
+
+    %% Добавлены кавычки в названии subgraph на следующей строке:
+    subgraph AppContainer ["Контейнер приложения (FastAPI Service)"]
+        API --> Auth[Модуль аутентификации X-API-Key]
+        
+        subgraph OnlinePipeline [Онлайн-контур инференса]
+            Auth --> Validator[Pydantic Request Validator]
+            Validator --> QueryEmbedder[Query Embedding Engine]
+            QueryEmbedder --> VectorSearch[Hybrid Retriever BM25 + Dense]
+            VectorSearch --> PromptBuilder[Prompt Engineering Module]
+            PromptBuilder --> LLMClient[LLM API Connector]
+            LLMClient --> PostProcessor[Post-Processor & Guardrails]
+        end
+
+        subgraph OfflinePipeline [Офлайн-контур инжеста данных]
+            API --> DocumentParser[Doc/PDF Parser & Text Splitter]
+            DocumentParser --> ChunkEmbedder[Chunk Embedding Engine]
+        end
+    end
+
+    subgraph ArtifactStore [Хранилище моделей]
+        QueryEmbedder -.->|Загрузка локального эмбеддера| LocalEmbedder[(Local Embedder Artifacts / HuggingFace)]
+        ChunkEmbedder -.->|Загрузка локального эмбеддера| LocalEmbedder
+    end
+
+    subgraph DataStore [Слой персистентности]
+        ChunkEmbedder -->|Запись векторов и метаданных| VectorDB[(Векторная БД: Qdrant / pgvector)]
+        VectorSearch -->|Поиск релевантного контекста| VectorDB
+        PostProcessor -->|Запись истории диалогов и фактов поиска| AppDB[(Реляционная БД: PostgreSQL / SQLite)]
+    end
+
+    subgraph ObservabilityStack [Контур мониторинга]
+        API -.->|Сбор метрик HTTP / Latency| MetricsEndpoint[/metrics Endpoint/]
+        PostProcessor -.->|Логирование бизнес-метрик и скоров| LogsOutput[JSON Logger]
+    end
+
+    PostProcessor -->|HTTP 200: Ответ + Ссылки| Client
+    
+    %% Стилизация
+    style AppContainer fill:#fff,stroke:#333,stroke-width:2px
+    style VectorDB fill:#fbb,stroke:#333,stroke-width:1px
+    style AppDB fill:#fbb,stroke:#333,stroke-width:1px
+```
+
+### 4.2. Спецификация компонентов системы
+
+| Компонент | Назначение модуля | Входные данные | Выходные данные | Используемые библиотеки |
+| :--- | :--- | :--- | :--- | :--- |
+| **app.api.routes** | Обработка HTTP-запросов пользователей и администраторов, маршрутизация эндпоинтов. | HTTP Request | HTTP Response | `fastapi`, `uvicorn` |
+| **app.api.schemas** | Валидация входных текстовых запросов и схем ответов с метаданными. | JSON Raw Payload | Строго типизированный объект (Pydantic) | `pydantic` |
+| **app.ml.parser** | Парсинг PDF/Markdown документов, очистка от мусора и деление текста на чанки с перекрытием. | Бинарный файл / Сырой текст | Массив текстовых чанков (Chunks) с метаданными | `langchain-text-splitters`, `pypdf` |
+| **app.ml.embedder** | Генерация плотных векторных представлений для поисковых запросов и текстовых чанков. | Строка текста (Query / Chunk) | Массив чисел (Вектор / Embedding) | `sentence-transformers`, `torch` |
+| **app.ml.retriever** | Поиск релевантных документов в векторной БД и их гибридное ранжирование (Dense + Ключевые слова). | Вектор запроса, текст запроса | Топ-K текстовых чанков с высокими скорами | `qdrant-client`, `rank-bm25` |
+| **app.services.rag** | Оркестрация бизнес-правил: сборка промта, отправка в LLM, обработка fallback-сценариев. | Топ-K чанков, исходный вопрос | Финальный бизнес-результат с флагами ревью | Чистый Python |
+| **app.repositories** | Сохранение истории запросов, логов инференса и связей «вопрос-ответ» для аудита. | Сущность лога / Текст диалога | Запись в реляционную БД | `sqlalchemy`, `aiosqlite` |
+| **app.core.observability**| Структурированное логирование (JSON) и агрегация метрик качества RAG (скоры схожести). | Данные этапов работы RAG | Метрики в Prometheus, логи в stdout | `prometheus-client`, `python-json-logger` |
