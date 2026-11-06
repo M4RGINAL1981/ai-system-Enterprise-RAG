@@ -158,3 +158,5 @@ flowchart TB
 * [ADR-01: Выбор режима инференса (Synchronous REST API)](docs/adr/ADR-01-inference-mode.md)
 * [ADR-02: Стратегия хранения артефактов моделей (S3 MinIO)](docs/adr/ADR-02-model-storage.md)
 * [ADR-03: Архитектурный стиль сервиса (Модульный монолит)](docs/adr/ADR-03-architecture-style.md)
+
+Бля ванёк заебал какого хуя всё на английском.
