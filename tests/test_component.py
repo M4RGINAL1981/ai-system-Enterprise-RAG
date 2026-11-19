@@ -1,52 +1,86 @@
-import pytest
+import pytest 
 from pydantic import ValidationError
+
 from app.api.schemas import PredictionRequest
+from app.ml.inference import DocumentChunk, DocumentRetriever
 from app.services.prediction import RAGPredictionService
+
+
+class MockRetriever(DocumentRetriever):
+    """Тестовый ретривер для быстрых изолированных юнит-тестов без поднятия Qdrant."""
+
+    def __init__(self):
+        pass
+
+    def retrieve(self, query: str):
+        if "счет депо" in query.lower():
+            return (
+                DocumentChunk(
+                    chunk_id="chunk_0150",
+                    document_name="terms-of-depository-activity-180806.pdf",
+                    page_number=37,
+                    text="Открытие счета депо владельца для физических лиц осуществляется на основании паспорта.",
+                    source_engine="qdrant_dense",
+                ),
+                0.86,
+            )
+        if "список владельцев" in query.lower():
+            return (
+                DocumentChunk(
+                    chunk_id="chunk_0095",
+                    document_name="terms-of-depository-activity-180806.pdf",
+                    page_number=26,
+                    text="Список всех владельцев ценных бумаг представляется реестродержателю в течение пяти рабочих дней.",
+                    source_engine="qdrant_dense",
+                ),
+                0.82,
+            )
+        return None, 0.20
+
 
 @pytest.fixture
 def service():
-    return RAGPredictionService()
+    return RAGPredictionService(retriever=MockRetriever())
 
-# Тест 1: Успешный поиск релевантного ответа
+
 def test_predict_success(service):
     request = PredictionRequest(
         item_id="TEST_01",
-        question="Сколько дней составляет ежегодный оплачиваемый отпуск?"
+        question="Как открыть счет депо физическому лицу?",
     )
     response = service.predict(request)
-    
-    assert response.manual_review_required is False
-    assert response.probability >= 0.4
-    assert len(response.sources) > 0
-    assert response.sources[0].document_name == "Положение_об_отпусках.pdf"
 
-# Тест 2: Разные запросы дают отличающийся результат
+    assert response.manual_review_required is False
+    assert response.probability >= 0.82
+    assert len(response.sources) == 1
+    assert response.sources[0].page_number == 37
+
+
 def test_predict_different_query(service):
     request = PredictionRequest(
         item_id="TEST_02",
-        question="Как подать заявку на замену ноутбука и монитора?"
+        question="В какой срок предоставляется список владельцев ценных бумаг?",
     )
     response = service.predict(request)
-    
-    assert response.manual_review_required is False
-    assert response.sources[0].document_name == "Регламент_ИТ_поддержки.pdf"
 
-# Тест 3: Низкая уверенность -> Передача человеку (Fallback)
+    assert response.manual_review_required is False
+    assert response.sources[0].chunk_id == "chunk_0095"
+
+
 def test_predict_low_confidence_fallback(service):
     request = PredictionRequest(
         item_id="TEST_03",
-        question="Какая погода сегодня в офисе и какой рецепт пирога?"
+        question="Какая сегодня погода и как приготовить шарлотку?",
     )
     response = service.predict(request)
-    
+
     assert response.manual_review_required is True
-    assert response.probability < 0.4
     assert len(response.sources) == 0
 
-# Тест 4: Валидация входа (слишком короткий вопрос)
+
 def test_predict_invalid_input():
     with pytest.raises(ValidationError):
         PredictionRequest(
             item_id="TEST_04",
-            question="Как?"  # Меньше 5 символов -> Pydantic бросит ошибку
+            question="Как?",
         )

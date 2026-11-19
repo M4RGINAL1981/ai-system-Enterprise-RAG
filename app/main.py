@@ -1,24 +1,26 @@
 from app.api.schemas import PredictionRequest
 from app.services.prediction import RAGPredictionService
 
+
 def main():
     service = RAGPredictionService()
-    
-    # 1. Корректный запрос
+
+    # 1. Корректный запрос по регламенту БКС Банка (с маскированием ПДн)
     req1 = PredictionRequest(
         item_id="DEMO_01",
-        question="Сколько дней составляет отпуск у сотрудников? Напиши на test@mail.ru"
+        question="Какие документы нужны физическому лицу для открытия счета депо? Ответ пришли на ivan@mail.ru",
     )
-    print("--- ТЕСТ 1: Успешный запрос ---")
+    print("--- ТЕСТ 1: Успешный поиск по регламенту БКС ---")
     print(service.predict(req1).model_dump_json(indent=2))
 
-    # 2. Неизвестный запрос (срабатывание бизнес-правила fallback)
+    # 2. Нецелевой запрос (срабатывание бизнес-правила fallback на оператора)
     req2 = PredictionRequest(
         item_id="DEMO_02",
-        question="Какая сегодня погода на улице и какой рецепт пирога?"
+        question="Какая сегодня погода на улице и какой рецепт яблочного пирога?",
     )
-    print("\n--- ТЕСТ 2: Передача оператору (score < 0.4) ---")
+    print("\n--- ТЕСТ 2: Низкая уверенность -> Передача оператору ---")
     print(service.predict(req2).model_dump_json(indent=2))
+
 
 if __name__ == "__main__":
     main()
