@@ -1,0 +1,38 @@
+schema: '2.0'
+stages:
+  prepare_data:
+    cmd: python -m app.data.pipeline
+    deps:
+    - path: app/data/contracts.py
+      hash: md5
+      md5: 7b7996b9ed126f2b2191902b46c90d12
+      size: 599
+    - path: app/data/pipeline.py
+      hash: md5
+      md5: 7bd11e87cd6fad77f89e0095a142a6c2
+      size: 7181
+    - path: app/ml/preprocessing.py
+      hash: md5
+      md5: 603f5f05f819154efd95176e723634b4
+      size: 1580
+    - path: data/raw/terms-of-depository-activity-180806.pdf
+      hash: md5
+      md5: c7a245617f81921a5ed4eaa9d82500d9
+      size: 2424807
+    outs:
+    - path: artifacts/preprocessor.joblib
+      hash: md5
+      md5: 220b7e86d1099bcb5fc0b7dc3e68b125
+      size: 145658
+    - path: data/processed/test.parquet
+      hash: md5
+      md5: 1aef52d35374ee0936db6920c2bc04e2
+      size: 88302
+    - path: data/processed/train.parquet
+      hash: md5
+      md5: fdcd5bdeb61b1aa37e9e5b7733c82c4e
+      size: 315992
+    - path: data/processed/validation_report.json
+      hash: md5
+      md5: e5d2d3a32213fab3f2e0693821232497
+      size: 180

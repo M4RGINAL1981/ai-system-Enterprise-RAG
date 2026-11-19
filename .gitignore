@@ -6,6 +6,9 @@ __pycache__/
 # C extensions
 *.so
 
+# Data Base 
+    qdrant_storage/
+
 # Distribution / packaging
 .Python
 build/
@@ -216,3 +219,8 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+qdrant_storage/
+
+mlruns/
+mlflow.db

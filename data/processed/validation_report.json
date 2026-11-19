@@ -1,0 +1,9 @@
+{
+  "raw_chunks": 812,
+  "clean_chunks": 812,
+  "train_rows": 649,
+  "test_rows": 163,
+  "dropped_duplicates": 0,
+  "tfidf_features": 3002,
+  "qdrant_points_indexed": 812
+}

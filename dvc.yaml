@@ -1,0 +1,15 @@
+stages:
+  prepare_data:
+    cmd: python -m app.data.pipeline
+    deps:
+      - app/data/pipeline.py
+      - app/data/contracts.py
+      - app/ml/preprocessing.py
+      - data/raw/terms-of-depository-activity-180806.pdf
+    outs:
+      - data/processed/train.parquet
+      - data/processed/test.parquet
+      - artifacts/preprocessor.joblib
+    metrics:
+      - data/processed/validation_report.json:
+          cache: false
