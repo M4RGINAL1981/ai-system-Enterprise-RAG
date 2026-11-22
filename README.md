@@ -153,6 +153,48 @@ flowchart TB
 
 ---
 
+## Вопроизводимость данных и индексация (DataOps & DVC)
+
+Подготовка данных, валидация контрактов (`Pandera`), обучение TF-IDF препроцессора (`artifacts/preprocessor.joblib`), загрузка векторов в `Qdrant` и трекинг в `MLflow` запускаются одной командой:
+
+```bash
+dvc repro
+```
+
+Просмотр метрик и артефактов экспериментов:
+```bash
+mlflow ui
+```
+
+---
+
+## Запуск в Docker (Контейнеризация)
+
+Система состоит из двух контейнеров: векторной базы данных `Qdrant` и  микросервиса инференса `FastAPI` (`enterprise-rag-api:v0.1.0`).
+
+### Сборка и запуск через Docker Compose
+```bash
+docker compose up --build -d
+```
+
+### Проверка состояния сервисов
+```bash
+docker ps
+curl http://localhost:8000/health
+```
+
+### Пример тестового запроса к API
+```bash
+curl -X POST http://localhost:8000/predict \
+  -H "Content-Type: application/json" \
+  -d '{"item_id": "DEMO_01", "question": "Какие документы нужны физическому лицу для открытия счета депо?"}'
+```
+
+### Запуск интеграционных Smoke-тестов контейнера
+```bash
+python -m pytest tests/test_container.py -v
+```
+
 ## Архитектурные решения (ADR)
 Основные инженерные компромиссы и обоснования технологического стека вынесены в отдельные структурированные карточки решений:
 * [ADR-01: Выбор режима инференса (Synchronous REST API)](docs/adr/ADR-01-inference-mode.md)

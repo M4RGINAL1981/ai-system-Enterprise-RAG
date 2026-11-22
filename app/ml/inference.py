@@ -7,6 +7,7 @@ import pandas as pd
 from qdrant_client import QdrantClient
 from sentence_transformers import SentenceTransformer
 from sklearn.metrics.pairwise import cosine_similarity
+import os
 
 
 @dataclass
@@ -23,7 +24,7 @@ class DocumentRetriever:
 
     def __init__(
         self,
-        qdrant_url: str = "http://localhost:6333",
+        qdrant_url: str = os.getenv("QDRANT_URL", "http://localhost:6333"),
         collection_name: str = "bcs_reglaments",
         embedding_model: str = "intfloat/multilingual-e5-small",
         preprocessor_path: Path = Path("artifacts/preprocessor.joblib"),
@@ -35,7 +36,7 @@ class DocumentRetriever:
         self._embed_model: SentenceTransformer | None = None
         self._qdrant_client: QdrantClient | None = None
 
-        # Загружаем артефакты ЛР № 4 для резервного контура (защита от Train-Serving Skew)
+        # Загружаем артефакты
         self.preprocessor = joblib.load(preprocessor_path) if preprocessor_path.exists() else None
         self.df = pd.read_parquet(data_path) if data_path.exists() else pd.DataFrame()
 

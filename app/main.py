@@ -1,26 +1,27 @@
-from app.api.schemas import PredictionRequest
+from app.api.schemas import PredictionRequest, PredictionResponse
 from app.services.prediction import RAGPredictionService
 
+# Docker
+from contextlib import asynccontextmanager 
+from fastapi import FastAPI, HTTPException
 
-def main():
-    service = RAGPredictionService()
+MODEL_VERSION = "v0.1.0"
 
-    # 1. Корректный запрос по регламенту БКС Банка (с маскированием ПДн)
-    req1 = PredictionRequest(
-        item_id="DEMO_01",
-        question="Какие документы нужны физическому лицу для открытия счета депо? Ответ пришли на ivan@mail.ru",
-    )
-    print("--- ТЕСТ 1: Успешный поиск по регламенту БКС ---")
-    print(service.predict(req1).model_dump_json(indent=2))
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    app.state.rag_service = RAGPredictionService()
+    yield
 
-    # 2. Нецелевой запрос (срабатывание бизнес-правила fallback на оператора)
-    req2 = PredictionRequest(
-        item_id="DEMO_02",
-        question="Какая сегодня погода на улице и какой рецепт яблочного пирога?",
-    )
-    print("\n--- ТЕСТ 2: Низкая уверенность -> Передача оператору ---")
-    print(service.predict(req2).model_dump_json(indent=2))
+app = FastAPI(title="AI system Enterprise RAG", version=MODEL_VERSION, lifespan=lifespan)
 
+@app.get("/health")
+def health():
+    return {"status": "ok", "model_version": MODEL_VERSION}
 
-if __name__ == "__main__":
-    main()
+@app.post("/predict", response_model=PredictionResponse)
+def predict(req: PredictionRequest):
+    try:
+        return app.state.rag_service.predict(req)
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail="Ошибка инференса") from exc
+

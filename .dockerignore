@@ -1,0 +1,12 @@
+.venv/
+.dvc/
+data/raw/
+mlruns/
+mlflow.db
+qdrant_storage/
+.git/
+__pycache__/
+docs/
+tests/
+*.pyc 
+**/__pycache__/

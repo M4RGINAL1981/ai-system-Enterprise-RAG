@@ -1,9 +1,23 @@
 services:
+
+  # 1. Первый контейнер: Qdrant.
   qdrant:
-    image: qdrant/qdrant:latest
+    image: qdrant/qdrant:latest                    
     container_name: rag_qdrant
     ports:
       - "6333:6333"
       - "6334:6334"
     volumes:
-      - ./qdrant_storage:/qdrant/storage
+      - ./qdrant_storage:/qdrant/storage   # Сохраняем данные базы на диск сервера, чтобы они не пропали при перезапуске
+  
+  # 2. Второй контейнер: AI-system-Enterprise-RAG.
+  rag-api:
+    build: .
+    image: enterprise-rag-api:v0.1.0
+    container_name: rag-enterprise 
+    ports: 
+      - "8000:8000"
+    environment: 
+      - QDRANT_URL=http://qdrant:6333
+    depends_on: 
+      - qdrant

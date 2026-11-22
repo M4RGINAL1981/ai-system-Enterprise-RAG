@@ -1,7 +1,7 @@
 import pytest 
 from pydantic import ValidationError
 
-from app.api.schemas import PredictionRequest
+from app.api.schemas import PredictionRequest                    # Cхемы
 from app.ml.inference import DocumentChunk, DocumentRetriever
 from app.services.prediction import RAGPredictionService
 
