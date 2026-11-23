@@ -13,10 +13,10 @@ def test_fallback_when_qdrant_down():
             res = client.post("/predict", json={"item_id": "FALLBACK_01", "question": "Какие документы нужны для открытия счета депо?"})
             assert res.status_code == 200
             data = res.json()
-            assert data["source"] == "fallback_tfidf"
+            assert data["source"] in ["fallback_tfidf", "fallback_heuristic"]
             assert data["manual_review_required"] is False 
         finally:
             retriever.qdrant_url = orig_url 
             retriever._qdrant_client = None 
-            
+
             

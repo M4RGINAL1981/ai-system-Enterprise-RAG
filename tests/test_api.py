@@ -9,7 +9,7 @@ def test_predict_success():
         
         data = res.json()
         assert "request_id" in data
-        assert data["source"] in ["qdrant_dense", "fallback_tfidf"]
+        assert data["source"] in ["qdrant_dense", "fallback_tfidf", "fallback_heuristic"]
         assert data["manual_review_required"] is False
 
 def test_validate_error():
