@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field
-from typing import Optional, List
+from typing import Optional, List, Literal
 
 class PredictionRequest(BaseModel):
     item_id: str = Field(description="Уникальный идентификатор объекта / транзакции / пользователя")
@@ -28,3 +28,4 @@ class PredictionResponse(BaseModel):
     model_version: str = Field(description="Семантическая версия используемой модели")
     manual_review_required: bool = Field(description="Флаг необходимости проверки оператором")
     sources: List[DocumentSource] = Field(description="Список верифицированных источников контекста")
+    source:str = Field(default="qdrant_dense", description="Источник поиска")

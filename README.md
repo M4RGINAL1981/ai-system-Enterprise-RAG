@@ -1,3 +1,4 @@
+![ML System CI/CD](https://github.com/M4RGINAL1981/ai-system-Enterprise-RAG/actions/workflows/ml-ci-cd.yml/badge.svg)
 # Корпоративная вопросно-ответная система по регламентам (Enterprise RAG)
 
 ## 1. Цель и задачи проекта

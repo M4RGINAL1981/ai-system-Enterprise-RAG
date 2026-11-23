@@ -1,0 +1,39 @@
+name: ML System CI/CD
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test-and-build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Выгрузка кода из репозитория
+        uses: actions/checkout@v4
+
+      - name: Установка Python 3.13
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: "pip"
+
+      - name: Установка зависимостей (CPU PyTorch + requirements)
+        run: |
+          pip install --no-cache-dir torch --index-url https://pytorch.org
+          pip install --no-cache-dir -r requirements.txt
+
+      - name: Запуск автотестов (Unit, API, Resilience Fallback)
+        run: python -m pytest tests/test_component.py tests/test_api.py tests/test_resilience.py -v
+
+      - name: Сборка Docker-образа
+        run: docker build -t enterprise-rag-api:${{ github.sha }} .
+
+      - name: Smoke-тестирование запущенного контейнера
+        run: |
+          docker run -d -p 8000:8000 --name test-api enterprise-rag-api:${{ github.sha }}
+          sleep 5
+          curl --fail http://localhost:8000/health
+          docker stop test-api

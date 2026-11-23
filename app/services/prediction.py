@@ -44,4 +44,5 @@ class RAGPredictionService:
             model_version=f"{self.base_version}:{engine}",
             manual_review_required=manual_review,
             sources=sources,
+            source=engine
         )
