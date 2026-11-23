@@ -22,7 +22,7 @@ jobs:
 
       - name: Установка зависимостей (CPU PyTorch + requirements)
         run: |
-          pip install --no-cache-dir torch --index-url https://pytorch.org
+          pip install --no-cache-dir torch --index-url https://download.pytorch.org/whl/cpu
           pip install --no-cache-dir -r requirements.txt
 
       - name: Запуск автотестов (Unit, API, Resilience Fallback)
