@@ -34,6 +34,13 @@ jobs:
       - name: Smoke-тестирование запущенного контейнера
         run: |
           docker run -d -p 8000:8000 --name test-api enterprise-rag-api:${{ github.sha }}
-          sleep 5
-          curl --fail http://localhost:8000/health
-          docker stop test-api
+          for i in {1..30}; do
+            if curl -sf http://localhost:8000/health; then
+              echo "API успешно запущен!"
+              docker stop test-api
+              exit 0
+            fi
+            sleep 1
+          done
+          docker logs test-api
+          exit 1
