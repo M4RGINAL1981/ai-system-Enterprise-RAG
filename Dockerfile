@@ -16,4 +16,4 @@ COPY data/processed/ ./data/processed
 
 EXPOSE 8000 
 
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]docker run --rm --network ai-system-enterprise-rag_default -e QDRANT_URL=http://qdrant:6333 -v "${PWD}/tests:/app/tests" enterprise-rag-api:v0.1.0 python -m pytest tests/test_component.py tests/test_api.py tests/test_resilience.py -v
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
